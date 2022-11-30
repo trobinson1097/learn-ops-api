@@ -1,6 +1,7 @@
 """Student view module"""
 import statistics
 from django.http import HttpResponseServerError
+from django.contrib.auth.models import User
 from django.utils.decorators import method_decorator
 from django.db.models import Count, Q
 from rest_framework import serializers, status
@@ -209,6 +210,32 @@ class StudentViewSet(ModelViewSet):
             return Response({'message': 'Student note created'}, status=status.HTTP_201_CREATED)
 
         return Response({'message': 'Unsupported HTTP method'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+
+# create custom action to toggle the corresponding User is_active property to False, PUT method
+    # @method_decorator(is_instructor())
+    @action(methods=['put'], detail=True)
+    def deactivate(self, request, pk=None):
+        """Handle PUT requests for deactiviating a single student
+
+        Returns:
+            Response -- 204, 404, or 500 status code
+        """
+        try:
+            # grab the django user 
+            student = User.objects.get(pk=pk)
+            student.is_active = False
+            student.save()
+            
+            return Response(None, status=status.HTTP_204_NO_CONTENT)
+
+        except User.DoesNotExist as ex:
+            return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
+
+        except Exception as ex:
+            return Response({'message': ex.args[0]}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 def student_score(self, obj):
